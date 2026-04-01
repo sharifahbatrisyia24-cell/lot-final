@@ -4,167 +4,271 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <title>Sistem GIS Lot Tanah Mukim Kesang</title>
+        
         <link rel="stylesheet" href="./resources/ol.css">
         <link rel="stylesheet" href="resources/fontawesome-all.min.css">
         <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
         <link rel="stylesheet" href="./resources/qgis2web.css">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         
         <style>
-        /* TEMA WARNA POLITEKNIK */
-        :root {
-            --poly-red: #ed1c24; 
-            --poly-blue: #0054a6;
-            --dark-bg: #222;
-        }
+            :root { --poly-red: #ed1c24; --poly-blue: #0054a6; --dark: #2c3e50; }
+            html, body, #map { width: 100%; height: 100%; padding: 0; margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
+            
+            #navbar { 
+                position: absolute; top: 0; left: 0; right: 0; height: 70px; 
+                background: white; display: flex; align-items: center; padding: 0 25px; 
+                z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+                border-bottom: 4px solid var(--poly-red); 
+            }
+            .logo-container { display: flex; align-items: center; gap: 15px; }
+            .nav-logo { height: 50px; }
+            #navbar-title { font-weight: 700; color: var(--poly-blue); font-size: 18px; text-transform: uppercase; margin-left: 15px; }
+            
+            .search-box {
+                position: absolute; top: 85px; left: 80px; z-index: 2100;
+                background: white; padding: 5px; border-radius: 8px;
+                display: flex; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            }
+            .search-box input { border: none; padding: 10px; width: 200px; border-radius: 5px 0 0 5px; outline: none; }
+            .search-box button { background: var(--poly-blue); color: white; border: none; padding: 10px 15px; border-radius: 0 5px 5px 0; cursor: pointer; }
 
-        html, body, #map {
-            width: 100%; height: 100%; padding: 0; margin: 0;
-            font-family: 'Poppins', sans-serif;
-            background-color: #f4f4f4;
-        }
+            #sidebar { 
+                position: absolute; top: 70px; left: -350px; bottom: 30px; width: 320px; 
+                background: white; z-index: 2500; box-shadow: 2px 0 10px rgba(0,0,0,0.1); 
+                padding: 20px; transition: 0.4s; overflow-y: auto; 
+            }
+            #sidebar.active { left: 0; }
 
-        /* NAVBAR MODEN */
-        #navbar {
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 70px;
-            background-color: white; 
-            display: flex;
-            align-items: center;
-            padding: 0 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 2000;
-            border-bottom: 4px solid var(--poly-red);
-        }
+            .controls-container { position: absolute; top: 85px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 2100; }
+            .btn-main { 
+                width: 50px; height: 50px; background: white; color: var(--poly-blue); 
+                border: none; border-radius: 8px; cursor: pointer; font-size: 20px; 
+                display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            }
 
-        #navbar-logo {
-            height: 55px; /* Saiz diselaraskan sedikit untuk logo PUO */
-            margin-right: 20px;
-            object-fit: contain;
-        }
-
-        #navbar-title {
-            font-size: 1.3em;
-            font-weight: 700;
-            color: var(--poly-blue);
-            text-transform: uppercase;
-        }
-
-        /* SEARCH BAR DI KANAN */
-        .search-layer {
-            top: 85px !important;
-            right: 20px !important;
-            left: auto !important;
-        }
-
-        .search-layer-input-search {
-            width: 280px !important;
-            height: 45px !important;
-            border-radius: 25px !important;
-            border: 2px solid var(--poly-blue) !important;
-            padding-left: 45px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-        }
-
-        /* ZOOM & BUTTONS */
-        .ol-control {
-            background-color: white !important;
-            border-radius: 8px !important;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
-        }
-
-        .ol-zoom { top: 85px; left: 20px; }
-        
-        /* GPS BUTTON CUSTOM */
-        .btn-gps {
-            position: absolute;
-            top: 140px; left: 20px;
-            width: 35px; height: 35px;
-            background: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            z-index: 1000;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            color: var(--poly-blue);
-        }
-
-        /* FOOTER */
-        #footer {
-            position: absolute;
-            bottom: 0; width: 100%;
-            height: 30px;
-            background: var(--dark-bg);
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 11px;
-            z-index: 1000;
-        }
+            .info-card { background: #f8f9fa; border-top: 5px solid var(--poly-blue); padding: 15px; border-radius: 4px; }
+            .info-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
+            .info-table td { padding: 10px 5px; border-bottom: 1px solid #eee; }
+            
+            .btn-print { 
+                width: 100%; padding: 12px; background: #e67e22; color: white; 
+                border: none; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 15px;
+                display: flex; align-items: center; justify-content: center; gap: 8px;
+            }
+            
+            #footer { position: absolute; bottom: 0; width: 100%; height: 30px; background: var(--dark); color: white; display: flex; justify-content: center; align-items: center; font-size: 10px; z-index: 2000; }
+            .tooltip { 
+                position: absolute; background: rgba(0,0,0,0.8); color: white; 
+                padding: 5px 12px; border-radius: 4px; font-size: 12px; 
+                pointer-events: none; z-index: 4000; display: none;
+                border-left: 3px solid var(--poly-red);
+            }
         </style>
-        <title>GIS Lot Tanah Politeknik</title>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     </head>
     <body>
 
         <div id="navbar">
-            <img id="navbar-logo" src="logo politeknik 2.png" alt="Logo Politeknik Ungku Omar">
-            <span id="navbar-title">Sistem Peta Lot Tanah Interaktif</span>
-        </div>
-
-        <button class="btn-gps" onclick="getLocation()" title="Cari Lokasi Saya">
-            <i class="fas fa-crosshairs"></i>
-        </button>
-
-        <div id="map">
-            <div id="popup" class="ol-popup">
-                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-                <div id="popup-content"></div>
+            <div class="logo-container">
+                <img class="nav-logo" src="logo_puo.png" alt="PUO">
+                <img class="nav-logo" src="logo politeknik 2.png" alt="POLITEKNIK">
             </div>
+            <span id="navbar-title">Sistem GIS Lot Tanah Mukim Kesang, Tangkak</span>
         </div>
 
-        <div id="footer">
-            &copy; 2026 Jabatan Kejuruteraan Awam - Politeknik Malaysia
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Cari No Lot...">
+            <button onclick="searchLot()"><i class="fas fa-search"></i></button>
         </div>
+
+        <div class="controls-container">
+            <button class="btn-main" onclick="toggleSidebar()"><i class="fas fa-info-circle"></i></button>
+            <button class="btn-main" onclick="getLocation()" style="color: #27ae60;"><i class="fas fa-crosshairs"></i></button>
+            <button class="btn-main" onclick="location.reload()"><i class="fas fa-sync"></i></button>
+        </div>
+
+        <div id="tooltip-label" class="tooltip"></div>
+
+        <div id="sidebar">
+            <div class="info-card">
+                <h3><i class="fas fa-file-alt"></i> Butiran Lot Tanah</h3>
+                <div id="feature-info">Sila klik pada lot dalam peta untuk melihat maklumat.</div>
+                
+                <div id="print-area" style="display:none;">
+                    <button class="btn-print" onclick="exportPDF()">
+                        <i class="fas fa-file-pdf"></i> CETAK MAKLUMAT & PETA (PDF)
+                    </button>
+                </div>
+            </div>
+            <button onclick="toggleSidebar()" style="width:100%; margin-top:15px; padding:10px; cursor:pointer; border:none; background:#eee; border-radius:5px;">TUTUP PANEL</button>
+        </div>
+
+        <div id="map"></div>
+        <div id="footer">&copy; 2026 JABATAN KEJURUTERAAN AWAM - PUO | MUKIM KESANG, TANGKAK, JOHOR</div>
 
         <script src="resources/qgis2web_expressions.js"></script>
         <script src="./resources/functions.js"></script>
         <script src="./resources/ol.js"></script>
         <script src="./resources/ol-layerswitcher.js"></script>
-        <script src="resources/ol-search-layer.js"></script>
-
-        <script>
-            var lyr_Satellite = new ol.layer.Tile({
-                title: 'Satelit Google',
-                type: 'base',
-                visible: true,
-                source: new ol.source.XYZ({
-                    url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-                    attributions: '© Google'
-                })
-            });
-        </script>
-
         <script src="layers/LOTPALINGFINAL_0.js"></script>
         <script src="layers/TANDASEMPADANGABUNG_1.js"></script>
         <script src="styles/LOTPALINGFINAL_0_style.js"></script>
         <script src="styles/TANDASEMPADANGABUNG_1_style.js"></script>
-        <script src="./layers/layers.js" type="text/javascript"></script> 
+        <script src="./layers/layers.js"></script>
         <script src="./resources/qgis2web.js"></script>
 
         <script>
+            let selectedData = { no: 'N/A', area: 'N/A', owner: 'N/A' };
+
+            // SENARAI PEMILIK LENGKAP (DAERAH TANGKAK)
+            const senaraiPemilik = {
+                "11462": "AIN NURLYDIA BINTI MOHD ZUBIR",
+                "11463": "AISYAH BINTI MOHD NAJMI",
+                "11464": "NUR MAISARAH BINTI MOHD NASIR",
+                "11465": "SAID AIMAN SYAFIQ BIN ABDULLAH",
+                "11466": "NUR DHIYA DURRANI BINTI MOHD TARMIZI",
+                "11467": "MUHAMAD FARIS DARWISY BIN FAHAIZUL ANUAR",
+                "11468": "MUHAMMAD FARIZUL AZUAN BIN YUSOF",
+                "11469": "NUR DHIA ARWIENA BINTI ABDUL AZIZ",
+                "11470": "MOHAMAD SYAFIQ BIN MOHD JUDDA",
+                "11471": "NORUL DANIAL AFIQ BIN NORUL FIKRI",
+                "11472": "ADAM HAKIMI BIN SALEHUDDIN",
+                "11473": "QURRATU AIN ZAHIRAH BINTI MOHD.NAASSHUKRI",
+                "11474": "MUHAMMAD HAZIQ IKHWAN BIN AHMAD HAIRUL",
+                "11475": "IMAN HAKIMI BIN AMRAN",
+                "11476": "MUHAMMAD DANISH ASYRAAF BIN SAIFURAZURA",
+                "11477": "REUVINA A/P SANTHANASAMY",
+                "11478": "KIIRTNANAA A/P MUTHUKUM"
+            };
+
+            // Tambah Satellite Layer
+            var lyr_Satellite = new ol.layer.Tile({
+                title: 'Google Satellite',
+                type: 'base',
+                visible: true,
+                source: new ol.source.XYZ({
+                    url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+                    crossOrigin: 'anonymous' 
+                })
+            });
             map.getLayers().insertAt(0, lyr_Satellite);
+
+            function toggleSidebar() { 
+                document.getElementById('sidebar').classList.toggle('active'); 
+            }
+
+            function displayData(p) {
+                let noLot = p['NO_LOT'] || 'N/A';
+                selectedData.no = noLot;
+                selectedData.area = p['AREA'] || 'N/A';
+                selectedData.owner = senaraiPemilik[noLot] || "MAKLUMAT PEMILIK TIADA";
+
+                document.getElementById('feature-info').innerHTML = `
+                    <table class="info-table">
+                        <tr><td><b>NO LOT</b></td><td>: ${selectedData.no}</td></tr>
+                        <tr><td><b>DAERAH</b></td><td>: TANGKAK</td></tr>
+                        <tr><td><b>MUKIM</b></td><td>: KESANG</td></tr>
+                        <tr><td><b>KELUASAN</b></td><td>: ${selectedData.area}</td></tr>
+                        <tr><td><b>PEMILIK</b></td><td>: ${selectedData.owner}</td></tr>
+                    </table>`;
+                
+                document.getElementById('print-area').style.display = 'block';
+                // Automatik buka sidebar jika belum terbuka
+                document.getElementById('sidebar').classList.add('active');
+            }
+
+            // KLIK UNTUK ZOOM DAN PAPAR MAKLUMAT (ONE-CLICK)
+            map.on('singleclick', function (evt) {
+                var feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
+                if (feature) {
+                    var extent = feature.getGeometry().getExtent();
+                    map.getView().fit(extent, { duration: 800, padding: [100, 100, 100, 100], maxZoom: 19 });
+                    displayData(feature.getProperties());
+                }
+            });
+
+            // CARI LOT
+            function searchLot() {
+                var input = document.getElementById('search-input').value.trim();
+                var found = false;
+                lyr_LOTPALINGFINAL_0.getSource().getFeatures().forEach(function(f) {
+                    if (f.get('NO_LOT') == input) {
+                        var extent = f.getGeometry().getExtent();
+                        map.getView().fit(extent, {duration: 1000, padding: [100,100,100,100], maxZoom: 19});
+                        displayData(f.getProperties());
+                        found = true;
+                    }
+                });
+                if (!found) alert("No Lot " + input + " tidak dijumpai di Mukim Kesang!");
+            }
+
+            // TOOLTIP SEMASA MOUSE OVER
+            map.on('pointermove', function (evt) {
+                if (evt.dragging) return;
+                var feature = map.forEachFeatureAtPixel(map.getEventPixel(evt.originalEvent), f => f);
+                let tt = document.getElementById('tooltip-label');
+                if (feature && feature.get('NO_LOT')) {
+                    tt.style.display = 'block';
+                    tt.style.left = (evt.pixel[0] + 15) + 'px';
+                    tt.style.top = (evt.pixel[1] - 30) + 'px';
+                    tt.innerHTML = "Lot: " + feature.get('NO_LOT');
+                } else { tt.style.display = 'none'; }
+            });
+
+            // CETAK PDF
+            async function exportPDF() {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(16);
+                pdf.text("LAPORAN MAKLUMAT LOT TANAH - MUKIM KESANG", 105, 20, { align: 'center' });
+                
+                pdf.setLineWidth(0.5);
+                pdf.line(20, 25, 190, 25);
+
+                pdf.setFontSize(11);
+                pdf.setFont("helvetica", "normal");
+                pdf.text(`No. Lot     : ${selectedData.no}`, 20, 40);
+                pdf.text(`Daerah/Mukim: TANGKAK / KESANG`, 20, 48);
+                pdf.text(`Keluasan    : ${selectedData.area}`, 20, 56);
+                pdf.text(`Pemilik     : ${selectedData.owner}`, 20, 64);
+                pdf.text(`Tarikh      : ${new Date().toLocaleString()}`, 20, 72);
+
+                map.once('rendercomplete', function () {
+                    const mapCanvas = document.createElement('canvas');
+                    const size = map.getSize();
+                    mapCanvas.width = size[0];
+                    mapCanvas.height = size[1];
+                    const mapContext = mapCanvas.getContext('2d');
+                    
+                    Array.prototype.forEach.call(document.querySelectorAll('.ol-layer canvas'), function (canvas) {
+                        if (canvas.width > 0) {
+                            const opacity = canvas.parentNode.style.opacity;
+                            mapContext.globalAlpha = opacity === '' ? 1 : Number(opacity);
+                            const transform = canvas.style.transform;
+                            const matrix = transform.match(/^matrix\(([^\(]*)\)$/)[1].split(',').map(Number);
+                            CanvasRenderingContext2D.prototype.setTransform.apply(mapContext, matrix);
+                            mapContext.drawImage(canvas, 0, 0);
+                        }
+                    });
+                    
+                    const mapImg = mapCanvas.toDataURL('image/jpeg', 0.8);
+                    pdf.text("Pelan Lokasi:", 20, 82);
+                    pdf.addImage(mapImg, 'JPEG', 20, 85, 170, 110);
+                    pdf.save(`Laporan_Lot_${selectedData.no}_Kesang.pdf`);
+                });
+                map.renderSync();
+            }
 
             function getLocation() {
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(function(position) {
-                        var coords = [position.coords.longitude, position.coords.latitude];
-                        var transformedCoords = ol.proj.fromLonLat(coords);
-                        map.getView().animate({center: transformedCoords, zoom: 18});
+                        map.getView().animate({center: ol.proj.fromLonLat([position.coords.longitude, position.coords.latitude]), zoom: 18});
                     });
-                } else {
-                    alert("Geolocation tidak disokong oleh browser anda.");
                 }
             }
         </script>
