@@ -1,276 +1,469 @@
 <!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-        <title>Sistem GIS Lot Tanah Mukim Kesang</title>
-        
-        <link rel="stylesheet" href="./resources/ol.css">
-        <link rel="stylesheet" href="resources/fontawesome-all.min.css">
-        <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
-        <link rel="stylesheet" href="./resources/qgis2web.css">
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-        
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-        
-        <style>
-            :root { --poly-red: #ed1c24; --poly-blue: #0054a6; --dark: #2c3e50; }
-            html, body, #map { width: 100%; height: 100%; padding: 0; margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
-            
-            #navbar { 
-                position: absolute; top: 0; left: 0; right: 0; height: 70px; 
-                background: white; display: flex; align-items: center; padding: 0 25px; 
-                z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-                border-bottom: 4px solid var(--poly-red); 
-            }
-            .logo-container { display: flex; align-items: center; gap: 15px; }
-            .nav-logo { height: 50px; }
-            #navbar-title { font-weight: 700; color: var(--poly-blue); font-size: 18px; text-transform: uppercase; margin-left: 15px; }
-            
-            .search-box {
-                position: absolute; top: 85px; left: 80px; z-index: 2100;
-                background: white; padding: 5px; border-radius: 8px;
-                display: flex; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            }
-            .search-box input { border: none; padding: 10px; width: 200px; border-radius: 5px 0 0 5px; outline: none; }
-            .search-box button { background: var(--poly-blue); color: white; border: none; padding: 10px 15px; border-radius: 0 5px 5px 0; cursor: pointer; }
 
-            #sidebar { 
-                position: absolute; top: 70px; left: -350px; bottom: 30px; width: 320px; 
-                background: white; z-index: 2500; box-shadow: 2px 0 10px rgba(0,0,0,0.1); 
-                padding: 20px; transition: 0.4s; overflow-y: auto; 
-            }
+<html lang="en">
+
+    <head>
+
+        <meta charset="utf-8">
+
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+
+        <title>Sistem GIS Lot Tanah Mukim Kesang</title>
+
+        
+
+        <link rel="stylesheet" href="./resources/ol.css">
+
+        <link rel="stylesheet" href="resources/fontawesome-all.min.css">
+
+        <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
+
+        <link rel="stylesheet" href="./resources/qgis2web.css">
+
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+        
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+        
+
+        <style>
+
+            :root { --neon-red: #ed1c24; --dark: #1a1c23; --yellow: #ffea00; }
+
+            html, body, #map { width: 100%; height: 100%; padding: 0; margin: 0; font-family: 'Poppins', sans-serif; background: #000; }
+
+            
+
+            #navbar { position: absolute; top: 0; left: 0; right: 0; height: 70px; background: white; display: flex; align-items: center; padding: 0 25px; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-bottom: 4px solid var(--neon-red); }
+
+            .nav-logo { height: 50px; }
+
+            #navbar-title { font-weight: 700; color: #0054a6; font-size: 18px; text-transform: uppercase; margin-left: 15px; }
+
+            
+
+            .search-box { position: absolute; top: 85px; left: 80px; z-index: 2100; background: rgba(0,0,0,0.8); padding: 5px; border-radius: 10px; display: flex; border: 1px solid var(--neon-red); }
+
+            .search-box input { border: none; background: transparent; padding: 10px; width: 200px; outline: none; color: white; }
+
+            .search-box button { background: var(--neon-red); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; }
+
+
+
+            #sidebar { position: absolute; top: 70px; left: -360px; bottom: 35px; width: 330px; background: rgba(26, 28, 35, 0.95); z-index: 2500; padding: 25px; transition: 0.4s; color: white; border-right: 3px solid var(--neon-red); overflow-y: auto; }
+
             #sidebar.active { left: 0; }
 
-            .controls-container { position: absolute; top: 85px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 2100; }
-            .btn-main { 
-                width: 50px; height: 50px; background: white; color: var(--poly-blue); 
-                border: none; border-radius: 8px; cursor: pointer; font-size: 20px; 
-                display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            }
 
-            .info-card { background: #f8f9fa; border-top: 5px solid var(--poly-blue); padding: 15px; border-radius: 4px; }
-            .info-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
-            .info-table td { padding: 10px 5px; border-bottom: 1px solid #eee; }
+
+            .controls-container { position: absolute; top: 85px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 2100; }
+
+            .btn-main { width: 50px; height: 50px; background: rgba(0,0,0,0.8); color: white; border: 1px solid var(--neon-red); border-radius: 10px; cursor: pointer; font-size: 20px; }
+
+
+
+            .ol-popup { position: absolute; background: white; padding: 15px; border-radius: 12px; border: 3px solid var(--neon-red); bottom: 15px; left: -50px; min-width: 180px; box-shadow: 0 0 20px rgba(0,0,0,0.5); color: #333; font-size: 13px; }
+
             
-            .btn-print { 
-                width: 100%; padding: 12px; background: #e67e22; color: white; 
-                border: none; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 15px;
-                display: flex; align-items: center; justify-content: center; gap: 8px;
-            }
+
+            .info-card { background: rgba(255,255,255,0.1); border-radius: 10px; border-left: 5px solid var(--yellow); padding: 20px; }
+
+            .info-table { width: 100%; }
+
+            .info-table td { padding: 8px 5px; color: white !important; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+            .info-table td b { color: var(--yellow) !important; }
+
             
-            #footer { position: absolute; bottom: 0; width: 100%; height: 30px; background: var(--dark); color: white; display: flex; justify-content: center; align-items: center; font-size: 10px; z-index: 2000; }
-            .tooltip { 
-                position: absolute; background: rgba(0,0,0,0.8); color: white; 
-                padding: 5px 12px; border-radius: 4px; font-size: 12px; 
-                pointer-events: none; z-index: 4000; display: none;
-                border-left: 3px solid var(--poly-red);
-            }
+
+            .btn-print { width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; margin-top: 15px; }
+
+            #footer { position: absolute; bottom: 0; width: 100%; height: 35px; background: #000; color: #888; display: flex; justify-content: center; align-items: center; font-size: 11px; z-index: 2000; }
+
+            
+
+            /* Pastikan Layer Switcher nampak jelas */
+
+            .ol-layerswitcher { top: 85px; right: 20px; z-index: 2100; background: rgba(0,0,0,0.7); border-radius: 8px; padding: 5px; }
+
+            .ol-layerswitcher label { color: white; font-size: 12px; }
+
         </style>
+
     </head>
+
     <body>
 
+
+
         <div id="navbar">
-            <div class="logo-container">
-                <img class="nav-logo" src="logo_puo.png" alt="PUO">
-                <img class="nav-logo" src="logo politeknik 2.png" alt="POLITEKNIK">
-            </div>
+
+            <img class="nav-logo" src="logo politeknik 2.png" alt="POLITEKNIK">
+
             <span id="navbar-title">Sistem GIS Lot Tanah Mukim Kesang, Tangkak</span>
+
         </div>
+
+
 
         <div class="search-box">
+
             <input type="text" id="search-input" placeholder="Cari No Lot...">
+
             <button onclick="searchLot()"><i class="fas fa-search"></i></button>
+
         </div>
+
+
 
         <div class="controls-container">
+
             <button class="btn-main" onclick="toggleSidebar()"><i class="fas fa-info-circle"></i></button>
-            <button class="btn-main" onclick="getLocation()" style="color: #27ae60;"><i class="fas fa-crosshairs"></i></button>
+
             <button class="btn-main" onclick="location.reload()"><i class="fas fa-sync"></i></button>
+
         </div>
 
-        <div id="tooltip-label" class="tooltip"></div>
+
+
+        <div id="popup" class="ol-popup"><div id="popup-content"></div></div>
+
+
 
         <div id="sidebar">
+
             <div class="info-card">
-                <h3><i class="fas fa-file-alt"></i> Butiran Lot Tanah</h3>
-                <div id="feature-info">Sila klik pada lot dalam peta untuk melihat maklumat.</div>
-                
+
+                <h3 style="margin:0; color:var(--yellow);">BUTIRAN LOT</h3>
+
+                <div id="feature-info" style="margin-top:15px; color:#ccc;">Klik pada lot tanah.</div>
+
                 <div id="print-area" style="display:none;">
-                    <button class="btn-print" onclick="exportPDF()">
-                        <i class="fas fa-file-pdf"></i> CETAK MAKLUMAT & PETA (PDF)
-                    </button>
+
+                    <button id="btn-export" class="btn-print" onclick="exportPDF()">CETAK PDF</button>
+
                 </div>
+
             </div>
-            <button onclick="toggleSidebar()" style="width:100%; margin-top:15px; padding:10px; cursor:pointer; border:none; background:#eee; border-radius:5px;">TUTUP PANEL</button>
+
+            <button onclick="toggleSidebar()" style="width:100%; margin-top:20px; background:none; border:1px solid #666; color:#ccc; padding:10px; cursor:pointer;">TUTUP</button>
+
         </div>
 
+
+
         <div id="map"></div>
-        <div id="footer">&copy; 2026 JABATAN KEJURUTERAAN AWAM - PUO | MUKIM KESANG, TANGKAK, JOHOR</div>
+
+        <div id="footer">&copy; 2026 JABATAN KEJURUTERAAN AWAM - PUO</div>
+
+
 
         <script src="resources/qgis2web_expressions.js"></script>
+
         <script src="./resources/functions.js"></script>
+
         <script src="./resources/ol.js"></script>
+
         <script src="./resources/ol-layerswitcher.js"></script>
+
         <script src="layers/LOTPALINGFINAL_0.js"></script>
+
         <script src="layers/TANDASEMPADANGABUNG_1.js"></script>
+
         <script src="styles/LOTPALINGFINAL_0_style.js"></script>
+
         <script src="styles/TANDASEMPADANGABUNG_1_style.js"></script>
+
         <script src="./layers/layers.js"></script>
+
         <script src="./resources/qgis2web.js"></script>
 
+
+
         <script>
-            let selectedData = { no: 'N/A', area: 'N/A', owner: 'N/A' };
 
-            // SENARAI PEMILIK LENGKAP (DAERAH TANGKAK)
-            const senaraiPemilik = {
-                "11462": "AIN NURLYDIA BINTI MOHD ZUBIR",
-                "11463": "AISYAH BINTI MOHD NAJMI",
-                "11464": "NUR MAISARAH BINTI MOHD NASIR",
-                "11465": "SAID AIMAN SYAFIQ BIN ABDULLAH",
-                "11466": "NUR DHIYA DURRANI BINTI MOHD TARMIZI",
-                "11467": "MUHAMAD FARIS DARWISY BIN FAHAIZUL ANUAR",
-                "11468": "MUHAMMAD FARIZUL AZUAN BIN YUSOF",
-                "11469": "NUR DHIA ARWIENA BINTI ABDUL AZIZ",
-                "11470": "MOHAMAD SYAFIQ BIN MOHD JUDDA",
-                "11471": "NORUL DANIAL AFIQ BIN NORUL FIKRI",
-                "11472": "ADAM HAKIMI BIN SALEHUDDIN",
-                "11473": "QURRATU AIN ZAHIRAH BINTI MOHD.NAASSHUKRI",
-                "11474": "MUHAMMAD HAZIQ IKHWAN BIN AHMAD HAIRUL",
-                "11475": "IMAN HAKIMI BIN AMRAN",
-                "11476": "MUHAMMAD DANISH ASYRAAF BIN SAIFURAZURA",
-                "11477": "REUVINA A/P SANTHANASAMY",
-                "11478": "KIIRTNANAA A/P MUTHUKUM"
-            };
+            // --- 1. SETUP BASE LAYERS (UPDATE: Google & OSM) ---
 
-            // Tambah Satellite Layer
-            var lyr_Satellite = new ol.layer.Tile({
+            var googleSat = new ol.layer.Tile({
+
                 title: 'Google Satellite',
+
                 type: 'base',
+
                 visible: true,
-                source: new ol.source.XYZ({
+
+                source: new ol.source.XYZ({ 
+
                     url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+
                     crossOrigin: 'anonymous' 
+
                 })
+
             });
-            map.getLayers().insertAt(0, lyr_Satellite);
 
-            function toggleSidebar() { 
-                document.getElementById('sidebar').classList.toggle('active'); 
-            }
 
-            function displayData(p) {
-                let noLot = p['NO_LOT'] || 'N/A';
-                selectedData.no = noLot;
-                selectedData.area = p['AREA'] || 'N/A';
-                selectedData.owner = senaraiPemilik[noLot] || "MAKLUMAT PEMILIK TIADA";
+
+            var osmMap = new ol.layer.Tile({
+
+                title: 'Street Map (Tangkak)',
+
+                type: 'base',
+
+                visible: false,
+
+                source: new ol.source.OSM()
+
+            });
+
+
+
+            // Susun layer (Base layers di bawah sekali)
+
+            map.getLayers().insertAt(0, osmMap);
+
+            map.getLayers().insertAt(1, googleSat);
+
+
+
+            // Re-aktifkan Layer Switcher
+
+            var layerSwitcher = new ol.control.LayerSwitcher({ tipLabel: 'Pilih Layer' });
+
+            map.addControl(layerSwitcher);
+
+
+
+            // --- 2. POPUP CONFIG ---
+
+            var container = document.getElementById('popup');
+
+            var content = document.getElementById('popup-content');
+
+            var overlay = new ol.Overlay({ element: container, autoPan: true });
+
+            map.addOverlay(overlay);
+
+
+
+            var selStyle = new ol.style.Style({
+
+                stroke: new ol.style.Stroke({ color: '#ffea00', width: 4 }),
+
+                fill: new ol.style.Fill({ color: 'rgba(255, 234, 0, 0.3)' })
+
+            });
+
+            var selectedF = null;
+
+
+
+            // --- 3. CLICK INTERACTION ---
+
+            map.on('singleclick', function (evt) {
+
+                var feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
+
+                
+
+                if (feature) {
+
+                    var geom = feature.getGeometry();
+
+                    if (geom.getType().includes('Point')) {
+
+                        var coord = geom.getCoordinates();
+
+                        content.innerHTML = `<b style="color:red">BATU SEMPADAN</b><br>E: ${coord[0].toFixed(3)}<br>N: ${coord[1].toFixed(3)}`;
+
+                        overlay.setPosition(evt.coordinate);
+
+                    } else {
+
+                        displayData(feature);
+
+                        overlay.setPosition(undefined);
+
+                    }
+
+                } else {
+
+                    overlay.setPosition(undefined);
+
+                }
+
+            });
+
+
+
+            // --- 4. SIDEBAR DISPLAY (UPDATE: Nama Kolum Join) ---
+
+            function displayData(f) {
+
+                if (selectedF) selectedF.setStyle(undefined);
+
+                selectedF = f;
+
+                f.setStyle(selStyle);
+
+                
+
+                var p = f.getProperties();
+
+                var noLot = p['NO_LOT'] || 'N/A';
+
+                
+
+                // MENGGUNAKAN KOLUM 'tsp — pe' (Pastikan guna simbol dash yang betul dari QGIS)
+
+                var namaPemilik = p['tsp — pe'] || p['tsp - pe'] || p['PEMILIK'] || 'TIADA REKOD'; 
+
+                
+
+                f.set('NAMA_FIX', namaPemilik);
+
+
 
                 document.getElementById('feature-info').innerHTML = `
+
                     <table class="info-table">
-                        <tr><td><b>NO LOT</b></td><td>: ${selectedData.no}</td></tr>
-                        <tr><td><b>DAERAH</b></td><td>: TANGKAK</td></tr>
-                        <tr><td><b>MUKIM</b></td><td>: KESANG</td></tr>
-                        <tr><td><b>KELUASAN</b></td><td>: ${selectedData.area}</td></tr>
-                        <tr><td><b>PEMILIK</b></td><td>: ${selectedData.owner}</td></tr>
-                    </table>`;
+
+                        <tr><td><b>NO LOT</b></td><td>: ${noLot}</td></tr>
+
+                        <tr><td><b>PEMILIK</b></td><td>: ${namaPemilik}</td></tr>
+
+                        <tr><td><b>AREA</b></td><td>: ${p['AREA'] || 'N/A'} m²</td></tr>
+
+                    </table>
+
+                    <div style="margin-top:20px; padding:10px; border:1px dashed var(--yellow); font-size:10px; line-height:1.4;">
+
+                        <b style="color:var(--yellow)">DISEDIAKAN OLEH:</b><br>
+
+                        SHARIFAH NUR ALEEYA BATRISYIA BINTI SYED FAIZAL
+
+                    </div>`;
+
                 
+
                 document.getElementById('print-area').style.display = 'block';
-                // Automatik buka sidebar jika belum terbuka
+
                 document.getElementById('sidebar').classList.add('active');
+
+                map.getView().fit(f.getGeometry().getExtent(), { duration: 1000, padding: [100, 100, 100, 100] });
+
             }
 
-            // KLIK UNTUK ZOOM DAN PAPAR MAKLUMAT (ONE-CLICK)
-            map.on('singleclick', function (evt) {
-                var feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
-                if (feature) {
-                    var extent = feature.getGeometry().getExtent();
-                    map.getView().fit(extent, { duration: 800, padding: [100, 100, 100, 100], maxZoom: 19 });
-                    displayData(feature.getProperties());
-                }
-            });
 
-            // CARI LOT
+
+            // --- 5. SEARCH ---
+
             function searchLot() {
-                var input = document.getElementById('search-input').value.trim();
+
+                var val = document.getElementById('search-input').value.trim();
+
                 var found = false;
-                lyr_LOTPALINGFINAL_0.getSource().getFeatures().forEach(function(f) {
-                    if (f.get('NO_LOT') == input) {
-                        var extent = f.getGeometry().getExtent();
-                        map.getView().fit(extent, {duration: 1000, padding: [100,100,100,100], maxZoom: 19});
-                        displayData(f.getProperties());
+
+                lyr_LOTPALINGFINAL_0.getSource().getFeatures().forEach(f => {
+
+                    if (String(f.get('NO_LOT')).trim() == val) {
+
+                        displayData(f);
+
                         found = true;
+
                     }
+
                 });
-                if (!found) alert("No Lot " + input + " tidak dijumpai di Mukim Kesang!");
+
+                if(!found && val !== "") alert("No Lot tidak dijumpai.");
+
             }
 
-            // TOOLTIP SEMASA MOUSE OVER
-            map.on('pointermove', function (evt) {
-                if (evt.dragging) return;
-                var feature = map.forEachFeatureAtPixel(map.getEventPixel(evt.originalEvent), f => f);
-                let tt = document.getElementById('tooltip-label');
-                if (feature && feature.get('NO_LOT')) {
-                    tt.style.display = 'block';
-                    tt.style.left = (evt.pixel[0] + 15) + 'px';
-                    tt.style.top = (evt.pixel[1] - 30) + 'px';
-                    tt.innerHTML = "Lot: " + feature.get('NO_LOT');
-                } else { tt.style.display = 'none'; }
-            });
 
-            // CETAK PDF
+
+            function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+
+
+
+            // --- 6. PRINT PDF LENGKAP ---
+
             async function exportPDF() {
+
+                if (!selectedF) return;
+
+                const btn = document.getElementById('btn-export');
+
+                btn.innerText = "Sila Tunggu...";
+
+                btn.disabled = true;
+
+
+
                 const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
 
-                pdf.setFont("helvetica", "bold");
-                pdf.setFontSize(16);
-                pdf.text("LAPORAN MAKLUMAT LOT TANAH - MUKIM KESANG", 105, 20, { align: 'center' });
-                
-                pdf.setLineWidth(0.5);
-                pdf.line(20, 25, 190, 25);
+                const doc = new jsPDF();
 
-                pdf.setFontSize(11);
-                pdf.setFont("helvetica", "normal");
-                pdf.text(`No. Lot     : ${selectedData.no}`, 20, 40);
-                pdf.text(`Daerah/Mukim: TANGKAK / KESANG`, 20, 48);
-                pdf.text(`Keluasan    : ${selectedData.area}`, 20, 56);
-                pdf.text(`Pemilik     : ${selectedData.owner}`, 20, 64);
-                pdf.text(`Tarikh      : ${new Date().toLocaleString()}`, 20, 72);
+                let p = selectedF.getProperties();
 
-                map.once('rendercomplete', function () {
-                    const mapCanvas = document.createElement('canvas');
-                    const size = map.getSize();
-                    mapCanvas.width = size[0];
-                    mapCanvas.height = size[1];
-                    const mapContext = mapCanvas.getContext('2d');
-                    
-                    Array.prototype.forEach.call(document.querySelectorAll('.ol-layer canvas'), function (canvas) {
-                        if (canvas.width > 0) {
-                            const opacity = canvas.parentNode.style.opacity;
-                            mapContext.globalAlpha = opacity === '' ? 1 : Number(opacity);
-                            const transform = canvas.style.transform;
-                            const matrix = transform.match(/^matrix\(([^\(]*)\)$/)[1].split(',').map(Number);
-                            CanvasRenderingContext2D.prototype.setTransform.apply(mapContext, matrix);
-                            mapContext.drawImage(canvas, 0, 0);
-                        }
-                    });
-                    
-                    const mapImg = mapCanvas.toDataURL('image/jpeg', 0.8);
-                    pdf.text("Pelan Lokasi:", 20, 82);
-                    pdf.addImage(mapImg, 'JPEG', 20, 85, 170, 110);
-                    pdf.save(`Laporan_Lot_${selectedData.no}_Kesang.pdf`);
+                let namaPemilik = selectedF.get('NAMA_FIX') || 'TIADA REKOD';
+
+
+
+                doc.setFontSize(16);
+
+                doc.text("LAPORAN MAKLUMAT LOT TANAH", 105, 20, { align: "center" });
+
+                doc.line(20, 25, 190, 25);
+
+                doc.setFontSize(12);
+
+                doc.text(`No. Lot: ${p['NO_LOT']}`, 20, 40);
+
+                doc.text(`Nama Pemilik: ${namaPemilik}`, 20, 50);
+
+                doc.text(`Keluasan: ${p['AREA']} m2`, 20, 60);
+
+
+
+                await html2canvas(document.getElementById('map'), {
+
+                    useCORS: true,
+
+                    ignoreElements: (el) => el.classList.contains('ol-control') || el.classList.contains('search-box')
+
+                }).then(canvas => {
+
+                    const imgData = canvas.toDataURL('image/png');
+
+                    doc.addImage(imgData, 'PNG', 20, 70, 170, 100);
+
                 });
-                map.renderSync();
+
+
+
+                doc.setFontSize(10);
+
+                doc.text("Disediakan oleh: SHARIFAH NUR ALEEYA BATRISYIA BINTI SYED FAIZAL", 20, 195);
+
+                doc.save(`Laporan_Lot_${p['NO_LOT']}.pdf`);
+
+                
+
+                btn.innerText = "CETAK PDF";
+
+                btn.disabled = false;
+
             }
 
-            function getLocation() {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(function(position) {
-                        map.getView().animate({center: ol.proj.fromLonLat([position.coords.longitude, position.coords.latitude]), zoom: 18});
-                    });
-                }
-            }
         </script>
+
     </body>
-</html>
+
+</html> 
